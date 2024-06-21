@@ -1,0 +1,57 @@
+#!/bin/bash
+
+
+#note;;; might have to calculate the network ID in the script as well, it will break on anything other than 
+#'perfect' subnets
+
+#note;;; need to input an nmap update portion into this
+
+#note;;; this version of the script might take 1-5 hours to complete, depending on the number of hosts. It resolves in a full scan of the entire subnet the VM is hosted on. It is very noisy and is intended to be run as a cron job when no one is using the network.
+
+#if this script is being run for a local network of your home, make sure that the VM is in your intended netmask. This is possible through a bridged network (direct physical exposure to host network)
+
+
+##################################################start
+
+#update tools used
+
+sudo apt -y update
+
+sudo apt -y upgrade nmap
+
+sudo nmap --script-updatedb
+
+# grab first three octets of network we are in
+
+First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
+
+# grab netmask of network
+
+Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
+
+
+#use these to run network scan with nmap
+
+sudo nmap $First_Three.0/$Net > scan.txt
+
+#grab IP addresses from devices with names...
+
+cat scan.txt | grep report | grep .lan | tr '(' ' ' | tr ')' ' ' | awk '{print $6}' > hosts.txt
+
+#...and without names
+
+cat scan.txt | grep report | tr '(' ' ' | tr ')' ' ' | awk '{print $5}' | grep $First_Three >> hosts.txt
+
+# sort the hosts list
+
+cat hosts.txt | sort > hosts.txt 
+
+# remove router from list for legal reasons
+
+sed -i 1d hosts.txt
+
+# input into a full nmap scan to log vulnerabilities and other information present on devices
+
+sudo nmap -p- -Pn -sC -O -sV -oG FullScan.txt $(cat hosts.txt)
+
+echo "Script Complete"
