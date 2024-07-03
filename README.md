@@ -1,2 +1,4 @@
 # "secure a single host" walkthrough
-the plan is to create a series of scripts that help me get visibility into my network from the vantage point of a Linux machine.
+the plan is to create a series of scripts that walk me through the steps of securing a single host.
+
+This will take inspiration from MITRE Defend and the BTFM
