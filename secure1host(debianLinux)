@@ -1,0 +1,126 @@
+#!/bin/bash
+
+System_Updates() {
+	echo "would you like to run a full upgrade of the system?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		sudo apt -y update
+		sudo apt -y full-upgrade
+		sudo apt -y autoremove
+		sudo apt -y autoclean
+		echo "System fully upgraded"
+	fi
+	echo "would you like to install/update all tools used in this script?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		sudo apt -y update
+		sudo apt -y install nmap netsecure ufw
+		sudo apt -y full-upgrade nmap netsecure ufw
+		sudo apt -y autoremove
+		sudo apt -y autoclean
+		echo "tools fully installed and updated"
+	fi
+	echo "Would you like to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		###figure out how to check for a cron job
+		###figure out how to create a con job
+		echo "this functionality has not been created yet"
+	fi
+
+}
+
+Basic_Net_Scan() {
+	First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
+	Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
+	sudo nmap $First_Three.0/$Net #should calculate network ID
+}
+
+Neighbors_Ports_Services_and_Firewall() {
+	echo "would you like to create a whitelist for your firewall? We will start with a basic scan of the subnet.(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		echo "running basic net scan"
+		Basic_Net_Scan() 
+		echo "enabling UFW and desplaying status"
+		sudo ufw enable
+		echo "would you like to flush all UFW rules?(y/n)"
+		read answer
+			if [ answer -eq 'y' ];
+			then
+				#flush all ufw rules
+			fi
+		sudo ufw status verbose
+		echo "We have scanned the subnet. Please enter a list of IP addresses to allow connections from. Seperate each address with commas only. This will create a whitelist that allows connections to and from only those IP addresses."
+		read IPlist
+		#seperate list into individual (((we are here))) 
+		#configure the whitelist using ufw
+	fi
+	echo "would you like to create a service blacklist?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		#list possible services
+		#list services open
+		#grab list of services to blacklist
+		#configure service blacklist (SSH, FTP, Telnet, etc) 
+	fi
+	#create a services blacklist (SSH, FTP, TELNET, etc) 
+	
+}
+
+Hardening_Audit_and_Configuration() {
+
+	echo "would you like to audit and harden your system?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		###begin a while loop based on value of answer
+		###let the user know that the script will now begin doing a system audit for hardening opportunities
+		###Run the hardening script
+		###prompt the user to make configuration changes to the system and tell the script when done
+		###ask the user if they would like to rerun the check. If yes, go back to the beginning of the while loop. If not, continue to the rest of the if statement
+		###set answer to 'y'
+		###enter another while loop based on value of answer -eq 'y'
+		###do the same as above, but make it a pentest audit. When done, finish the if statement
+	fi
+
+}
+
+Enable_Logging() {
+
+	echo "would you like to enable logging of X?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		#do one thing
+	fi
+
+}
+
+Automated_Response() {
+
+	echo "would you like to do one thing?(y/n)"
+	read answer
+	if [ answer -eq 'y' ];
+	then
+		#do one thing
+	fi
+
+}
+
+Main() {
+	System_Updates()
+	Neighbors_Ports_Services_and_Firewall() 
+	Hardening_Audit_and_Configuration() 
+	Enable_Logging()
+	Automated_Response() 
+	echo "System Secured. Script Terminated"
+	exit 0
+}
+
+Main()
