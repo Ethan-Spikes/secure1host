@@ -3,100 +3,191 @@
 System_Updates() {
 	echo "would you like to run a full upgrade of the system?(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "Beginning full system upgrade"
+		echo " "
 		sudo apt -y update
 		sudo apt -y full-upgrade
 		sudo apt -y autoremove
 		sudo apt -y autoclean
 		echo "System fully upgraded"
+		echo " "
 	fi
 	echo "would you like to install/update all tools used in this script?(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "Beginning tools update"
+		echo " "
 		sudo apt -y update
-		sudo apt -y install nmap netsecure ufw
-		sudo apt -y full-upgrade nmap netsecure ufw
+		sudo apt -y install nmap netsecure ufw lynis
+		sudo apt -y full-upgrade nmap netsecure ufw lynis
 		sudo apt -y autoremove
 		sudo apt -y autoclean
 		echo "tools fully installed and updated"
+		echo " "
 	fi
-	echo "Would you like to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
+	echo "---Displaying user crontab---"
+	echo " "
+	crontab -l
+	echo " "
+	echo "---Displaying root crontab---"
+	echo " "
+	sudo crontab -l
+	echo " "
+	echo "Accessable crontabs displayed"
+	echo " "
+	echo "Would you like to erase all crontab items?(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
-		###figure out how to check for a cron job
-		###figure out how to create a con job
-		echo "this functionality has not been created yet"
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo " " | crontab -
+		echo " " | sudo crontab -
+		echo "user and root crontabs erased"
+		echo " "
+		echo "---Displaying user crontab---"
+		echo " "
+		crontab -l
+		echo " "
+		echo "---Displaying root crontab---"
+		echo " "
+		sudo crontab -l
+		echo " "
+		echo "Accessable crontabs displayed"
+		echo " "
 	fi
-
+	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "0 1 * * * apt -y update 
+1 1 * * * apt -y upgrade 
+2 1 * * * apt -y autoremove 
+3 1 * * * apt -y autoclean " | sudo crontab -
+		echo "---Displaying updated root crontab---"
+		echo " "
+		sudo crontab -l
+		echo " "
+	fi
 }
 
-Basic_Net_Scan() {
-	First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
-	Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
-	sudo nmap $First_Three.0/$Net #should calculate network ID
-}
 
-Neighbors_Ports_Services_and_Firewall() {
-	echo "would you like to create a whitelist for your firewall? We will start with a basic scan of the subnet.(y/n)"
+
+Firewall_Enable() {
+
+	echo "---Displaying UFW Firewall status---"
+	echo " "
+	sudo ufw status verbose
+	echo " "
+	echo "would you like to enable a default UFW firewall?(only permits outgoing connections)"
+	echo "This will flush all user configurations on UFW.(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
-		echo "running basic net scan"
-		Basic_Net_Scan() 
-		echo "enabling UFW and desplaying status"
+	echo " "
+	if [ $answer == 'y' ]; then
 		sudo ufw enable
-		echo "would you like to flush all UFW rules?(y/n)"
-		read answer
-			if [ answer -eq 'y' ];
-			then
-				#flush all ufw rules
-			fi
+		sudo ufw reset
+		sudo ufw enable
+		echo " "
+		echo "---Displaying UFW Firewall status---"
+		echo " "
 		sudo ufw status verbose
-		echo "We have scanned the subnet. Please enter a list of IP addresses to allow connections from. Seperate each address with commas only. This will create a whitelist that allows connections to and from only those IP addresses."
-		read IPlist
-		#seperate list into individual (((we are here))) 
-		#configure the whitelist using ufw
+		echo " "
 	fi
-	echo "would you like to create a service blacklist?(y/n)"
-	read answer
-	if [ answer -eq 'y' ];
-	then
-		#list possible services
-		#list services open
-		#grab list of services to blacklist
-		#configure service blacklist (SSH, FTP, Telnet, etc) 
-	fi
-	#create a services blacklist (SSH, FTP, TELNET, etc) 
 	
 }
 
-Hardening_Audit_and_Configuration() {
-
-	echo "would you like to audit and harden your system?(y/n)"
+Basic_Net_Scan() {
+	
+	echo "Would you like to do a simple scan of the subnet? This information can be used to create an outgoing connection whitelist in our next step.(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
-		###begin a while loop based on value of answer
-		###let the user know that the script will now begin doing a system audit for hardening opportunities
-		###Run the hardening script
-		###prompt the user to make configuration changes to the system and tell the script when done
-		###ask the user if they would like to rerun the check. If yes, go back to the beginning of the while loop. If not, continue to the rest of the if statement
-		###set answer to 'y'
-		###enter another while loop based on value of answer -eq 'y'
-		###do the same as above, but make it a pentest audit. When done, finish the if statement
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "---Initiating basic network scan---"
+		echo " "
+		First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
+		Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
+		ID=$(ifconfig | grep netmask | awk '/broadcast/ {print $4}' | tr '.' ' ' | awk '{print $4}')
+		sudo nmap $First_Three.$ID/$Net
+		echo " "
+	fi
+	
+}
+
+Firewall_outgoing_whitelist() { #overly restrictive
+
+		echo "would you like to make a whitelist for outgoing connections? This will block all connections through unauthorized ports, allowing for further logging.(y/n)"
+		read answer
+		echo " "
+		if [ $answer == 'y' ]; then
+			while [ $answer == 'y' ]; do
+				echo 'name a port to whitelist (recommend one of these; 993, 6969, 53, http, https, 465, 587)'
+				read port
+				sudo ufw allow out $port
+				echo " "
+				echo "outbound $port connections permitted. go again?(y/n)"
+				read answer
+				echo " "
+			done
+			sudo ufw default deny outgoing
+		else
+			sudo ufw default allow outgoing
+		fi
+		echo "---Displaying UFW Firewall status---"
+		echo " "
+		sudo ufw status verbose
+		echo " "
+			
+}
+
+
+Application_Whitelisting() {
+
+	echo 'application whitelisting not made yet'
+
+}
+
+
+Hardening_Audit() {
+
+	echo "would you like to audit your system for hardening?(y/n)"
+	read answer
+	if [ $answer == 'y' ]; then
+		while [ $answer == 'y' ]; do
+			echo 'system will now do an internal audit'
+			sudo lynis audit system
+			echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that audit to see the results of your changes?(y/n)'
+			read answer
+		done
+
+
+	fi
+
+}
+
+Pentest_Audit() {
+
+	echo "would you like to pentest your system?(y/n)"
+	read answer
+	if [ $answer == 'y' ]; then
+		while [ $answer == 'y' ]; do
+			echo 'system will now do an internal pentest'
+			sudo lynis --pentest audit system
+			echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that pentest to see the results of your changes?(y/n)'
+			read answer
+		done
+
+
 	fi
 
 }
 
 Enable_Logging() {
 
-	echo "would you like to enable logging of X?(y/n)"
+	echo "would you like to enable (fill in the blank) logging?(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
+	if [ $answer == 'y' ]; then
+		echo 'not made yet'
 		#do one thing
 	fi
 
@@ -104,23 +195,27 @@ Enable_Logging() {
 
 Automated_Response() {
 
-	echo "would you like to do one thing?(y/n)"
+	echo "would you like to enable and configure automated detection and response actions?(y/n)"
 	read answer
-	if [ answer -eq 'y' ];
-	then
+	if [ $answer == 'y' ]; then
+		echo 'not made yet'
 		#do one thing
 	fi
 
 }
 
 Main() {
-	System_Updates()
-	Neighbors_Ports_Services_and_Firewall() 
-	Hardening_Audit_and_Configuration() 
-	Enable_Logging()
-	Automated_Response() 
-	echo "System Secured. Script Terminated"
-	exit 0
+
+	System_Updates #complete
+	Firewall_Enable #complete
+	Basic_Net_Scan #complete
+	Firewall_outgoing_whitelist #complete
+	Hardening_Audit #complete
+	Pentest_Audit #complete
+	Enable_Logging #enable system logging
+	Automated_Response #create triggers and checks for alerts and automated responses
+	echo "System security setup complete. Script Terminated"
+	
 }
 
-Main()
+Main
