@@ -1,33 +1,30 @@
 #!/bin/bash
 
-System_Updates() {
-	echo "would you like to run a full upgrade of the system?(y/n)"
-	read answer
-	echo " "
-	if [ $answer == 'y' ]; then
-		echo "Beginning full system upgrade"
-		echo " "
+
+
+Full_System_Update() {
+
 		sudo apt -y update
 		sudo apt -y full-upgrade
 		sudo apt -y autoremove
 		sudo apt -y autoclean
-		echo "System fully upgraded"
-		echo " "
-	fi
-	echo "would you like to install/update all tools used in this script?(y/n)"
-	read answer
-	echo " "
-	if [ $answer == 'y' ]; then
-		echo "Beginning tools update"
-		echo " "
+		
+}
+
+Tools_Update() {
+
 		sudo apt -y update
 		sudo apt -y install nmap netsecure ufw lynis
 		sudo apt -y full-upgrade nmap netsecure ufw lynis
 		sudo apt -y autoremove
 		sudo apt -y autoclean
-		echo "tools fully installed and updated"
-		echo " "
-	fi
+		
+}
+
+
+
+Display_Crontab() {
+
 	echo "---Displaying user crontab---"
 	echo " "
 	crontab -l
@@ -38,71 +35,47 @@ System_Updates() {
 	echo " "
 	echo "Accessable crontabs displayed"
 	echo " "
-	echo "Would you like to erase all crontab items?(y/n)"
-	read answer
+
+}
+
+Erase_Crontab() {
+
+	echo " " | crontab -
+	echo " " | sudo crontab -
+	echo "user and root crontabs erased"
 	echo " "
-	if [ $answer == 'y' ]; then
-		echo " " | crontab -
-		echo " " | sudo crontab -
-		echo "user and root crontabs erased"
-		echo " "
-		echo "---Displaying user crontab---"
-		echo " "
-		crontab -l
-		echo " "
-		echo "---Displaying root crontab---"
-		echo " "
-		sudo crontab -l
-		echo " "
-		echo "Accessable crontabs displayed"
-		echo " "
-	fi
-	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
-	read answer
-	echo " "
-	if [ $answer == 'y' ]; then
-		echo "0 1 * * * apt -y update 
+
+}
+
+Auto_System_Updates() {
+	
+	echo "0 1 * * * apt -y update 
 1 1 * * * apt -y upgrade 
 2 1 * * * apt -y autoremove 
 3 1 * * * apt -y autoclean " | sudo crontab -
-		echo "---Displaying updated root crontab---"
-		echo " "
-		sudo crontab -l
-		echo " "
-	fi
+
 }
 
 
+Firewall_Reset_Default() {
 
-Firewall_Enable() {
+	sudo ufw enable
+	sudo ufw reset ###need to figure out how to do this without it asking me permission
+	sudo ufw enable
+
+}
+
+Display_Firewall_Status() {
 
 	echo "---Displaying UFW Firewall status---"
 	echo " "
 	sudo ufw status verbose
 	echo " "
-	echo "would you like to enable a default UFW firewall?(only permits outgoing connections)"
-	echo "This will flush all user configurations on UFW.(y/n)"
-	read answer
-	echo " "
-	if [ $answer == 'y' ]; then
-		sudo ufw enable
-		sudo ufw reset
-		sudo ufw enable
-		echo " "
-		echo "---Displaying UFW Firewall status---"
-		echo " "
-		sudo ufw status verbose
-		echo " "
-	fi
-	
+
 }
 
 Basic_Net_Scan() {
 	
-	echo "Would you like to do a simple scan of the subnet? This information can be used to create an outgoing connection whitelist in our next step.(y/n)"
-	read answer
-	echo " "
-	if [ $answer == 'y' ]; then
 		echo "---Initiating basic network scan---"
 		echo " "
 		First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
@@ -110,36 +83,29 @@ Basic_Net_Scan() {
 		ID=$(ifconfig | grep netmask | awk '/broadcast/ {print $4}' | tr '.' ' ' | awk '{print $4}')
 		sudo nmap $First_Three.$ID/$Net
 		echo " "
-	fi
 	
 }
 
-Firewall_outgoing_whitelist() { #overly restrictive
+Firewall_Whitelist_Single_Out_Port() {
 
-		echo "would you like to make a whitelist for outgoing connections? This will block all connections through unauthorized ports, allowing for further logging.(y/n)"
-		read answer
-		echo " "
-		if [ $answer == 'y' ]; then
-			while [ $answer == 'y' ]; do
-				echo 'name a port to whitelist (recommend one of these; 993, 6969, 53, http, https, 465, 587)'
-				read port
-				sudo ufw allow out $port
-				echo " "
-				echo "outbound $port connections permitted. go again?(y/n)"
-				read answer
-				echo " "
-			done
-			sudo ufw default deny outgoing
-		else
-			sudo ufw default allow outgoing
-		fi
-		echo "---Displaying UFW Firewall status---"
-		echo " "
-		sudo ufw status verbose
-		echo " "
-			
+	sudo ufw allow out $port
+
 }
 
+
+Lynis_Hardening_Audit() {
+
+	echo 'system will now do an internal audit'
+	sudo lynis audit system
+
+}
+
+Lynis_Pentest_Audit() {
+
+	echo 'system will now do an internal pentest'
+	sudo lynis --pentest audit system
+
+}
 
 Application_Whitelisting() {
 
@@ -147,74 +113,190 @@ Application_Whitelisting() {
 
 }
 
+Enable_Logging() {
 
-Hardening_Audit() {
+	echo 'not made yet'
+	#do one thing
 
+}
+
+Automated_Response() {
+
+	echo 'not made yet'
+	#do one thing
+
+}
+
+
+
+##############################################################################################
+
+Interractive_Mode() { #this one will negotiate with the user
+
+	#Begin System Updates Procedure
+	
+	echo "would you like to run a full upgrade of the system?(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "Beginning full system upgrade"
+		echo " "
+		Full_System_Update
+		echo "System fully upgraded"
+		echo " "
+	fi
+	echo "would you like to install/update all tools used in this script?(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		echo "Beginning tools update"
+		echo " "
+		Tools_Update
+		echo "tools fully installed and updated"
+		echo " "
+	fi
+	Display_Crontab
+	echo "Would you like to erase all crontab items?(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		Erase_Crontab
+		Display_Crontab
+	fi
+	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		Auto_System_Updates
+		Display_Crontab
+	fi
+	
+	#Begin Firewall Defaults Procedure
+	
+	Display_Firewall_Status
+	echo "would you like to enable a default UFW firewall?(only permits outgoing connections)"
+	echo "This will flush all user configurations on UFW.(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		Firewall_Reset_Default
+		Display_Firewall_Status
+	fi
+	
+	#Begin Basic Net Scan Procedure
+	
+	echo "Would you like to do a simple scan of the subnet? This information can be used to create an outgoing connection whitelist in our next step. Be advised, if you have your Firewall's default outbound permissions set to deny, this will create 10 error messages at the start.(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		Basic_Net_Scan
+	fi
+	
+	#Begin Firewall Outgoing Whitelist Procedure
+	
+	echo "would you like to make a whitelist for outgoing connections? This will block all connections through unauthorized ports, allowing for further logging.(y/n)"
+	read answer
+	echo " "
+	if [ $answer == 'y' ]; then
+		while [ $answer == 'y' ]; do
+			echo 'name a port to whitelist (recommend one of these; 993, 6969, 53, http, https, 465, 587)'
+			read port
+			Firewall_Whitelist_Single_Out_Port
+			echo " "
+			echo "outbound $port connections permitted. go again?(y/n)"
+			read answer
+			echo " "
+		done
+		sudo ufw default deny outgoing
+	else
+		sudo ufw default allow outgoing
+	fi
+	Display_Firewall_Status
+	
+	#Begin Lynis Hardening Audit
+	
 	echo "would you like to audit your system for hardening?(y/n)"
 	read answer
 	if [ $answer == 'y' ]; then
 		while [ $answer == 'y' ]; do
-			echo 'system will now do an internal audit'
-			sudo lynis audit system
+			Lynis_Hardening_Audit
 			echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that audit to see the results of your changes?(y/n)'
 			read answer
 		done
 
 
 	fi
-
-}
-
-Pentest_Audit() {
-
+	
+	#Begin Lynis Pentest Audit
+	
 	echo "would you like to pentest your system?(y/n)"
 	read answer
 	if [ $answer == 'y' ]; then
 		while [ $answer == 'y' ]; do
-			echo 'system will now do an internal pentest'
-			sudo lynis --pentest audit system
+			Lynis_Pentest_Audit
 			echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that pentest to see the results of your changes?(y/n)'
 			read answer
 		done
 
 
 	fi
-
-}
-
-Enable_Logging() {
-
+	
+	#Begin Logging Enable
+	
 	echo "would you like to enable (fill in the blank) logging?(y/n)"
 	read answer
 	if [ $answer == 'y' ]; then
-		echo 'not made yet'
-		#do one thing
+		Enable_Logging
 	fi
-
-}
-
-Automated_Response() {
-
+	
+	#Begin Automated Detection and Response
+	
 	echo "would you like to enable and configure automated detection and response actions?(y/n)"
 	read answer
 	if [ $answer == 'y' ]; then
-		echo 'not made yet'
-		#do one thing
+		Automated_Response
 	fi
+	
+	echo "System security hardening complete. Terminating."
+	
+}
+#################################################################################################
 
+##############################################################################################
+
+Auto_Mode() { #this one wil negotiate with the .config file - not made yet
+
+#	echo "Default mode selected. Loading .config file."
+#	System_Updates #complete
+#	Firewall_Enable #complete
+#	Basic_Net_Scan #complete
+#	Firewall_outgoing_whitelist #complete
+#	Hardening_Audit #complete
+#	Pentest_Audit #complete
+#	Enable_Logging #enable system logging
+#	Automated_Response #create triggers and checks for alerts and automated responses
+	echo "Auto Mode has not been made yet. Terminating."
+	
 }
 
-Main() {
+##############################################################################################
+	
+Main() { #this one will negotiate with (so far the user) on whether they want Auto Mode or Interactive Mode
 
-	System_Updates #complete
-	Firewall_Enable #complete
-	Basic_Net_Scan #complete
-	Firewall_outgoing_whitelist #complete
-	Hardening_Audit #complete
-	Pentest_Audit #complete
-	Enable_Logging #enable system logging
-	Automated_Response #create triggers and checks for alerts and automated responses
-	echo "System security setup complete. Script Terminated"
+	echo "This program has an interactive mode and an auto mode. Input \"I\" and press Enter for interactive. Press Enter (no input) for auto."
+	read answer
+	if [ $answer == 'I' ] || [ $answer == 'i' ]; then
+		Interractive_Mode
+	else
+		Auto_Mode
+		#figure out how to put a .config file into a program
+		#figure out how to display settings for a .config file 
+		#figure out how to structure and then recall the configurations for a .config file.
+		#figure out how I should get them to change the values for the config file.
+			#First, I want the program to check if the below two .config files exist in the same directory as this executable. If not, I want them made
+			#I think I want two configuration files to be used by this program. One is called Default.config and the other is called user.config
+		
+	fi
 	
 }
 
