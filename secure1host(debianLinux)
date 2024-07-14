@@ -1,5 +1,34 @@
 #!/bin/bash
 
+#this is the script you run to do everything this script is meant to do.
+
+#Welcome to secure1host. It's a pet project of mine.
+
+#This program, as it stands right now, was built with the idea that if I want to set up a personal computer securely, I should have the means to do it easily and scaleably.  I want this program to allow people to set up and configure their system and trust that it's more secure than most systems and will tell you if there's signs of an intrusion in many cases.
+
+#I'm thinking about changing the name to secure1debian and then making another one called secure1windows10. It's definitely on my list of things to do.
+
+#The structure is simple. We update our software, then set up automatic updates, then set up the firewall, then we start doing system audit and configuration, then we enable sustainable logging for a small system, then we build automated detection, alerting, and response instrumentation around the security posture we've built ourselves prior to this final step.
+
+#Things are changing as I work on this, and when I can get to it it's very fun.
+
+
+
+########################################################################################
+
+################################################Begin importing arguments
+
+
+ARGS=$(getopt --options 'cdih' --long "configure,default,interactive,help" -- "$@")
+
+set -- "$ARGS"
+
+configure="false"
+default="false"
+interactive="false"
+
+###############################################Begin Utility Functions
+
 
 
 Full_System_Update() {
@@ -120,6 +149,120 @@ Enable_Logging() {
 
 }
 
+Hashing_Files_and_Executables() {
+
+	echo 'not made yet'
+	
+}
+
+Scanning_Self_For_Vulnerabilities() {
+	
+	echo 'not made yet'
+	
+}
+
+Monitoring_Neighbors() {
+
+	echo 'not made yet'
+	
+}
+
+User_Whitelisting() {
+
+	echo 'not made yet'
+	
+}
+
+User_Monitoring() {
+
+	echo 'not made yet'
+	
+}
+
+Password_Checker() {
+
+	echo 'not made yet'
+	
+}
+
+Monitor_Host_File() {
+
+	echo 'not made yet'
+	
+}
+
+Set_up_Netcat_scan_detector() {
+
+	echo 'not made yet'
+	
+}
+
+Plant_honey_credentials() {
+
+	echo 'not made yet'
+	
+} 
+
+Enable_network_traffic_monitoring() {
+
+	echo 'not made yet'
+	
+}
+
+set_up_snort() {
+
+	echo 'not made yet'
+	
+}
+
+Enable_Honey_Ports() {
+
+	echo 'not made yet'
+	
+}
+
+Enable_Honey_Hashes() {
+
+	echo 'not made yet'
+	
+}
+
+Frustrate_Scanning_Efforts() {
+
+	echo 'not made yet'
+	
+}
+
+Frustrate_Privesc_Efforts() {
+
+	echo 'not made yet'
+	
+}
+
+Respond_To_Scanning() {
+
+	echo 'not made yet'
+	
+}
+
+Trip_to_monitor() {
+
+	echo 'not made yet'
+	
+}
+
+Trip_to_Ban() {
+
+	echo 'not made yet'
+	
+} 
+
+Trip_to_report() {
+
+	echo 'not made yet'
+	
+}
+
 Automated_Response() {
 
 	echo 'not made yet'
@@ -127,9 +270,62 @@ Automated_Response() {
 
 }
 
+###########################################Begin Configuration Handling Functions
 
+Root_Check() {
 
-##############################################################################################
+	user=$(whoami)
+	if [ $user != root ]; then
+		echo 'Permission denied. Please run sudo secure1host -h'
+		exit
+	fi
+
+}
+
+Help() {
+	
+	echo 'Displaying help:'
+	echo ' '
+	echo 'secure1host runs in Auto Mode and Interactive Mode.'
+	echo ' '
+	echo 'to run in Interactive Mode, run "sudo secure1host --(i)nteractive"'
+	echo 'to run in Auto Mode, run "sudo secure1host"'
+	
+	echo ' '
+	echo 'Auto Mode runs with default settings unless configured (-c)'
+	echo 'this will modify your configurations as you go, but you can use a keyboard interrupt to cancel at any time'
+	echo ' '
+	echo 'to reset secure1host to defualt mode, run "sudo secure1host --(d)efault"'
+	echo 'this will not delete the configurations you have made.'
+	echo ' '
+	echo 'to display this help, run "sudo secure1host --(h)elp"'
+
+}
+
+create_config_file() {
+
+	touch secure1host.config
+	Method='default' >> secure1host.config
+
+}
+
+default_reset() {
+
+	echo "setting Method variable to default" #echo figure out how to change method variable to default
+	exit
+
+}
+
+###########################################Begin Default Config Variables
+
+default_configs() {
+
+	echo "loading default variables" #structure and determine auto mode to determine what these variables are to be
+	Method='default'
+	
+}
+
+###########################################Begin Interactive mode
 
 Interractive_Mode() { #this one will negotiate with the user
 
@@ -257,47 +453,114 @@ Interractive_Mode() { #this one will negotiate with the user
 		Automated_Response
 	fi
 	
-	echo "System security hardening complete. Terminating."
+	#Interactive Mode Complete, exit.
 	
-}
-#################################################################################################
-
-##############################################################################################
-
-Auto_Mode() { #this one wil negotiate with the .config file - not made yet
-
-#	echo "Default mode selected. Loading .config file."
-#	System_Updates #complete
-#	Firewall_Enable #complete
-#	Basic_Net_Scan #complete
-#	Firewall_outgoing_whitelist #complete
-#	Hardening_Audit #complete
-#	Pentest_Audit #complete
-#	Enable_Logging #enable system logging
-#	Automated_Response #create triggers and checks for alerts and automated responses
-	echo "Auto Mode has not been made yet. Terminating."
+	echo "secure1host complete. Terminating script."
+	exit
 	
 }
 
-##############################################################################################
-	
-Main() { #this one will negotiate with (so far the user) on whether they want Auto Mode or Interactive Mode
+############################################Begin Configuration Mode
 
-	echo "This program has an interactive mode and an auto mode. Input \"I\" and press Enter for interactive. Press Enter (no input) for auto."
-	read answer
-	if [ $answer == 'I' ] || [ $answer == 'i' ]; then
+Config_File_Update() {
+
+	echo "first thing, sets method to user"
+	echo "then is an interactive mode for editing the config file"
+	#set up and define varaiables for Auto Mode to determine what the configuration procedure for the config file is to be.
+
+}
+
+############################################Begin Auto Mode
+
+Auto_Mode() {
+
+	echo "test if config file is there, if not there, load default configuration into a new config file, including the method variable"
+	echo "load config file variables, where the variable after Method is behind an if statement checking for Method" #learn how to load config file, as a part of declaring variables
+	Method='default' #remove this after config file set up
+	
+	if [ $Method == "default" ]; then
+		default_configs
+	fi
+	if [ $Method == "user" ]; then
+		echo "loading user variables"
+	fi
+	echo "running through procedure, where the variables determine behavior"
+	
+
+}
+
+############################################Begin Main function
+
+Main() {
+
+	#checks if running as root, kicks you out if not
+	
+	Root_Check
+	
+	#changes settings based on options
+	
+	echo "Welcome to secure1host!"
+	echo "Only interactive mode (-i) and help (-h) has been designed. Auto Mode and supporting functions are in progress, as are methods of output and several core functions."
+	echo "-----------------------------"
+	echo " "
+	
+	for i in $ARGS; do
+		case "$i" in
+			-c | --configure)
+				configure="true"
+				echo "this will configure user settings"
+				shift;;
+			-d | --default)
+				default="true"
+				echo "this will return Auto Mode to default."
+				shift;;
+			-i | --interactive)
+				interactive="true"
+				echo "this will launch interactive mode"
+				shift;;
+			-h | --help)
+				Help
+				exit;;
+			--)
+				break;;
+
+		esac
+	done
+	
+	#executes based on settings
+	
+	if [ "$interactive" == true ]; then
+		echo "executing in interactive mode"
+		echo " "
 		Interractive_Mode
-	else
+	fi
+	
+	if [ "$configure" == true ]; then
+		echo "setting to user mode and updating config file"
+		echo " "
+		Config_File_Update
+		echo "to return to default mode from user mode, run 'sudo secure1host --default'"
+		echo " "
+	fi
+	
+	if [ "$default" == true ]; then
+		echo "returning secure1host to default mode"
+		echo " "
+		default_reset
+	fi
+	
+	if [ "$interactive" != true ] && [ "$configure" != true ] && [ "$default" != true ];then
+		echo "running secure1host's Auto Mode"
+		echo " "
 		Auto_Mode
-		#figure out how to put a .config file into a program
-		#figure out how to display settings for a .config file 
-		#figure out how to structure and then recall the configurations for a .config file.
-		#figure out how I should get them to change the values for the config file.
-			#First, I want the program to check if the below two .config files exist in the same directory as this executable. If not, I want them made
-			#I think I want two configuration files to be used by this program. One is called Default.config and the other is called user.config
 		
 	fi
 	
+	
+	
+	
+	
+
 }
 
 Main
