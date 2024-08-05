@@ -1,38 +1,26 @@
 #!/bin/bash
 
-#this is the script you run to do everything this script is meant to do.
+#this is secure1host simplified. 
 
-#Welcome to secure1host. It's a pet project of mine.
+#it takes the same intent as the original secure1host but it simplifies it.
 
-#This program, as it stands right now, was built with the idea that if I want to set up a personal computer securely, I should have the means to do it easily and scaleably.  I want this program to allow people to set up and configure their system and trust that it's more secure than most systems and will tell you if there's signs of an intrusion in many cases.
+#the original secure1host was trying to do too much and it made it monolithic and awkward
 
-#I'm thinking about changing the name to secure1debian and then making another one called secure1windows10. It's definitely on my list of things to do.
-#!/bin/bash
+#The origional secure1host tried too hard to be interactive, when all we want is something that makes a great one-liner and that is easy to use.
 
-#Welcome to secure1host. It's a pet project of mine.
+#what I want it to do is ask all of the questions at once and then - with one yes or no - do it all very quickly. Spacing out the questions is very annoying.
 
-#This program, as it stands right now, was built with the idea that if I want to set up a personal computer securely, I should have the means to do it easily and scaleably.  I want this program to allow people to set up and configure their system and trust that it's more secure than most systems and will tell you if there's signs of an intrusion in many cases.
-
-#I'm thinking about changing the name to secure1debian and then making another one called secure1windows10. It's definitely on my list of things to do.
-
-#The structure is simple. We update our software, then set up automatic updates, then set up the firewall, then we start doing system audit and configuration, then we enable sustainable logging for a small system, then we build automated detection, alerting, and response instrumentation around the security posture we've built ourselves prior to this final step.
-
-#Things are changing as I work on this, and when I can get to it it's very fun.
+#then after that I want it to assess the security of the system after the configurations and give further suggestions using lynis.
 
 
+################################################################# args and variables
 
-########################################################################################
-
-################################################ Import initial arguments and declare all variables 'false' or 'n'
-
-
-ARGS=$(getopt --options 'cih' --long "configure,interactive,help" -- "$@")
+ARGS=$(getopt --options 'hy' --long "help, yes" -- "$@")
 
 set -- "$ARGS"
 
-configure="false"
-interactive="false"
-Flip_white_port='false'
+All_Yes='n'
+
 S_Update='n'
 T_Update='n'
 C_Erase='n'
@@ -66,11 +54,10 @@ Trap_Ban='n'
 Trap_Report='n'
 Auto_Response='n'
 
-###############################################Begin Utility Functions
 
+######################################################## Functions
 
-
-Full_System_Update() { #function good
+Full_System_Update() { #Function Included
 
 	if [ $S_Update == 'y' ]; then 
 		echo "Beginning full system upgrade"
@@ -86,7 +73,7 @@ Full_System_Update() { #function good
 		
 }
 
-Tools_Update() { #function good
+Tools_Update() { #Function Included
 
 	if [ $T_Update == 'y' ]; then
 		
@@ -94,7 +81,7 @@ Tools_Update() { #function good
 		echo " "
 		sudo apt -y update
 		sudo apt -y install nmap ufw lynis crontab
-		sudo apt -y full-upgrade nmap ufw lynis crontab
+		sudo apt -y upgrade nmap ufw lynis crontab
 		sudo apt -y autoremove
 		sudo apt -y autoclean
 		echo "tools fully installed and updated"
@@ -105,36 +92,6 @@ Tools_Update() { #function good
 		
 }
 
-
-
-Display_Crontab() { #function good
-
-
-	echo "---Displaying user crontab---"
-	echo " "
-	crontab -l
-	echo " "
-	echo "---Displaying root crontab---"
-	echo " "
-	sudo crontab -l
-	echo " "
-
-
-}
-
-Erase_Crontab() { #function good
-
-	if [ $C_Erase == 'y' ]; then
-		echo " " | crontab -
-		echo " " | sudo crontab -
-		echo "user and root crontabs erased"
-		echo " "
-		Display_Crontab
-	fi
-
-
-}
-
 Auto_System_Updates() {  #function good
 	
 	if [ $C_Update == 'y' ]; then
@@ -142,50 +99,22 @@ Auto_System_Updates() {  #function good
 1 1 * * * apt -y upgrade 
 2 1 * * * apt -y autoremove 
 3 1 * * * apt -y autoclean " | sudo crontab -
-		Display_Crontab
 	fi
 
 
 }
 
-Display_Firewall_Status() { #function good
 
-	echo "---Displaying UFW Firewall status---"
-	echo " "
-	sudo ufw status verbose
-	echo " "
-
-}
-
-
-Firewall_Reset_Default() {
+Default_Firewall_Enable() {
 
 	if [ $F_Default == 'y' ]; then
 		sudo ufw enable
-		sudo ufw reset ###need to figure out how to do this without it asking me permission
-		sudo ufw enable
-		Display_Firewall_Status
 	fi
 
 
 }
 
 
-
-Basic_Net_Scan() {
-	
-	if [ $Net_Scan == 'y' ]; then
-		echo "---Initiating basic network scan---"
-		echo " "
-		First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
-		Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
-		ID=$(ifconfig | grep netmask | awk '/broadcast/ {print $4}' | tr '.' ' ' | awk '{print $4}')
-		sudo nmap -T4 $First_Three.$ID/$Net
-		echo " "
-	fi
-
-	
-}
 
 Firewall_Whitelist_Single_Out_Port() {
 
@@ -203,36 +132,9 @@ Firewall_Whitelist_Single_Out_Port() {
 }
 
 
-Lynis_Hardening_Audit() {
 
-	if [ $Hard_Audit == 'y' ]; then
-		echo 'system will now do an internal audit'
-		sudo lynis audit system
-
-	fi
-
-}
-
-Lynis_Pentest_Audit() {
-
-	if [ $Pen_Audit == 'y' ]; then
-		echo 'system will now do an internal pentest'
-		sudo lynis --pentest audit system
-	fi
-
-
-}
 
 ##################################STOP INCLUDING Here
-
-Application_Whitelisting() {
-
-	if [ $A_Whitelist == 'y' ]; then
-		echo 'application whitelisting not made yet'
-	fi
-
-
-}
 
 Enable_Logging() {
 
@@ -244,18 +146,20 @@ Enable_Logging() {
 
 }
 
-Hashing_Files_and_Executables() {
-
-	if [ $Hash == 'y' ]; then
+Scanning_Self_For_Vulnerabilities() {
+	
+	if [ $Vuln_Scan == 'y' ]; then
 		echo 'not made yet'
 	fi
 
 	
 }
 
-Scanning_Self_For_Vulnerabilities() {
-	
-	if [ $Vuln_Scan == 'y' ]; then
+
+
+Set_up_Netcat_scan_detector() {
+
+	if [ $Scan_Detect == 'y' ]; then
 		echo 'not made yet'
 	fi
 
@@ -270,6 +174,16 @@ Monitoring_Neighbors() {
 
 	
 }
+
+Hashing_Files_and_Executables() {
+
+	if [ $Hash == 'y' ]; then
+		echo 'not made yet'
+	fi
+
+	
+}
+
 
 User_Whitelisting() {
 
@@ -289,60 +203,6 @@ User_Monitoring() {
 	
 }
 
-Password_Checker() {
-
-	if [ $P_Checker == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Monitor_Host_File() {
-
-	if [ $Host_Mon == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Set_up_Netcat_scan_detector() {
-
-	if [ $Scan_Detect == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Plant_honey_credentials() {
-
-	
-	if [ $Honey_Creds == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-} 
-
-Enable_network_traffic_monitoring() {
-
-	if [ $P_Cap == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-set_up_snort() {
-
-	if [ $Snort == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
 
 Enable_Honey_Ports() {
 
@@ -353,15 +213,6 @@ Enable_Honey_Ports() {
 	
 }
 
-Enable_Honey_Hashes() {
-
-	if [ $Honey_Hash == 'y' ]; then
-		echo 'not made yet'
-	fi
-	
-
-	
-}
 
 Frustrate_Scanning_Efforts() {
 
@@ -372,45 +223,10 @@ Frustrate_Scanning_Efforts() {
 	
 }
 
-Frustrate_Privesc_Efforts() {
-
-	if [ $Priv_Frag == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
 
 Respond_To_Scanning() {
 
 	if [ $Scan_Resp == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Trip_to_monitor() {
-
-	if [ $Trap_Monitor == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Trip_to_Ban() {
-
-	if [ $Trap_Ban == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-} 
-
-Trip_to_report() {
-
-	if [ $Trap_Report == 'y' ]; then
 		echo 'not made yet'
 	fi
 
@@ -427,13 +243,76 @@ Automated_Response() {
 
 }
 
-###########################################Begin Configuration Handling Functions
+###################################################progress report functions below
+
+
+Display_Crontab() { #Function Included
+
+
+	echo "---Displaying user crontab---"
+	echo " "
+	crontab -l
+	echo " "
+	echo "---Displaying root crontab---"
+	echo " "
+	sudo crontab -l
+	echo " "
+
+
+}
+
+Display_Firewall_Status() { #function included
+
+	echo "---Displaying UFW Firewall status---"
+	echo " "
+	sudo ufw status verbose
+	echo " "
+
+}
+
+Basic_Net_Scan() {
+	
+	if [ $Net_Scan == 'y' ]; then
+		echo "---Initiating basic network scan---"
+		echo " "
+		First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
+		Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
+		ID=$(ifconfig | grep netmask | awk '/broadcast/ {print $4}' | tr '.' ' ' | awk '{print $4}')
+		sudo nmap -T4 $First_Three.$ID/$Net
+		echo " "
+	fi
+
+	
+}
+
+Lynis_Hardening_Audit() {
+
+	if [ $Hard_Audit == 'y' ]; then
+		echo 'system will now do an internal audit'
+		sudo lynis audit system
+	fi
+	
+}
+
+Progress_Report() {
+
+		Display_Crontab
+		Display_Firewall_Status
+		Basic_Net_Scan
+		Lynis_Hardening_Audit
+
+}
+
+####################################################### Checks and Help
+
+
 
 Root_Check() { #good
 
 	user=$(whoami)
 	if [ $user != root ]; then
 		echo 'Permission denied.'
+		echo ' '
 		Help
 		exit
 	fi
@@ -444,200 +323,109 @@ Help() { #good
 	
 	echo 'Displaying help:'
 	echo ' '
-	echo 'secure1host runs in Auto Mode and Interactive Mode.'
-	echo ' '
-	echo 'CAUTION: This script modifies system security settings and assumes the user knows what the script will do and the effects the script will have during and after execution. By using this script, you agree to accept all liability of this scripts effects on the system and environment you are using it on. If used as intended, it will make your system harder to compromise under normal conditions, but will also disable functionality which may be critical to your system and network environment. To learn the functions of the script prior to execution, I recommend reading the source code.'
-	echo ' '
-	echo 'to run in Auto Mode, run "sudo secure1host"'
-	echo 'to configure Auto Mode, run "sudo secure1host -c (or --configure)"'
-	echo 'to run in Interactive Mode, run "sudo secure1host -i (or --interactive)"'
+	echo 'to run the program, execute "sudo secure1host"'
+	echo 'to run the program with all settings enabled, execute "sudo secure1host -y"'
 	echo 'to display this help again, run "secure1host -h (or --help)"'
 
 }
 
-###########################################Begin Default Config Variables
+############################################################## Set Variables
 
-default_configs() {
+Set_Variables() {
 
-	echo "loading default variables" #structure and determine auto mode to determine what these variables are to be
-	Method='default'
+	echo "Answer the following questions."
+	echo " "
+	echo "would you like to run a full upgrade of the system?(y/n)"
+	read S_Update
+	echo " "
+	echo "would you like to install and update all tools used in this script?(y/n)"
+	read T_Update
+	echo " "
+	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
+	read C_Update
+	echo " "
+	echo "Would you like to enable a default system firewall? (deny incoming, allow outgoing)(y/n)"
+	read F_Default
+	echo " "
+	echo "Would you like to run a local subnet scan after the script runs?(y/n)"
+	read Net_Scan
+	echo " "
+	echo "Would you like to run a System Hardening Audit after the script runs?(y/n)"
+	read Hard_Audit
+	echo " "
+
+} 
+
+############################################################## Run Commands
+
+Run_Commands() {
+
+	Full_System_Update
+	Tools_Update
+	Auto_System_Updates
+	Default_Firewall_Enable
+
+}
+
+############################################################## All Yeses
+All_Yes() {
+
 	S_Update='y'
 	T_Update='y'
 	C_Erase='y'
 	C_Update='y'
 	F_Default='y'
-	Net_Scan='n'
-	F_White_Port='n'
-	port='993 6969 53 http https 465 587' #figure out how to write this
+	Net_Scan='y'
+	F_White_Port='y'
+	port=' '
 	Hard_Audit='y'
 	Pen_Audit='y'
 	###################stop include here
-	A_Whitelist='n'
-	Log_Enable='n'
-	Hash='n'
-	Vuln_Scan='n'
-	Mon_Scan='n'
-	U_White='n'
-	U_Mon='n'
-	Host_Mon='n'
-	Scan_Detect='n'
-	Honey_Creds='n'
-	P_Cap='n'
-	Snort='n'
-	Honey_Ports='n'
-	Honey_Hash='n'
-	Scan_Frag='n'
-	Priv_Frag='n'
-	Scan_Resp='n'
-	Trap_Monitor='n'
-	Trap_Ban='n'
-	Trap_Report='n'
-	Auto_Response='n'
+	A_Whitelist='y'
+	Log_Enable='y'
+	Hash='y'
+	Vuln_Scan='y'
+	Mon_Scan='y'
+	U_White='y'
+	U_Mon='y'
+	Host_Mon='y'
+	Scan_Detect='y'
+	Honey_Creds='y'
+	P_Cap='y'
+	Snort='y'
+	Honey_Ports='y'
+	Honey_Hash='y'
+	Scan_Frag='y'
+	Priv_Frag='y'
+	Scan_Resp='y'
+	Trap_Monitor='y'
+	Trap_Ban='y'
+	Trap_Report='y'
+	Auto_Response='y'
 	
 }
 
-###########################################Begin Interactive mode
-
-Interractive_Mode() { #this one will negotiate with the user
-
-	#Begin System Updates Procedure
-	
-	echo "would you like to run a full upgrade of the system?(y/n)"
-	read S_Update
-	echo " "
-	Full_System_Update
-	echo "would you like to install/update all tools used in this script?(y/n)"
-	read T_Update
-	Tools_Update
-	Display_Crontab
-	echo "Would you like to erase all crontab items?(y/n)"
-	read C_Erase
-	echo " "
-	Erase_Crontab
-	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
-	read C_Update
-	echo " "
-	Auto_System_Updates
-	
-	#Begin Firewall Defaults Procedure
-	
-	Display_Firewall_Status
-	echo "would you like to enable a default UFW firewall?(only permits outgoing connections)"
-	echo "This will flush all user configurations on UFW.(y/n)"
-	read F_Default
-	echo " "
-	Firewall_Reset_Default
-
-	#Begin Basic Net Scan Procedure
-	
-	echo "Would you like to do a simple scan of the subnet? This information can be used to create an outgoing connection whitelist in our next step. Be advised, if you have your Firewall's default outbound permissions set to deny, this will create 10 error messages at the start.(y/n)"
-	read Net_Scan
-	echo " "
-	Basic_Net_Scan
-	
-	#Begin Firewall Outgoing Whitelist Procedure
-	
-	echo "would you like to make a whitelist for outgoing connections? This will block all connections through unauthorized ports, allowing for further logging.(y/n)"
-	read F_White_Port
-	echo " "
-	while [ $F_White_Port == 'y' ]; do
-		echo 'name a port to whitelist (recommend one of these; 993, 6969, 53, http, https, 465, 587)'
-		read port
-		Firewall_Whitelist_Single_Out_Port
-		echo " "
-		echo "outbound $port connections permitted. go again?(y/n)"
-		read F_White_Port
-		echo " "
-	done
-	
-	#Begin Lynis Hardening Audit
-	
-	echo "would you like to audit your system for hardening?(y/n)"
-	read Hard_Audit
-	while [ $Hard_Audit == 'y' ]; do
-		Lynis_Hardening_Audit
-		echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that audit to see the results of your changes?(y/n)'
-		read Hard_Audit
-	done
-	
-	#Begin Lynis Pentest Audit
-	
-	echo "would you like to pentest your system?(y/n)"
-	read Pen_Audit 
-	while [ $Pen_Audit == 'y' ]; do
-		Lynis_Pentest_Audit
-		echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that pentest to see the results of your changes?(y/n)'
-		read Pen_Audit
-	done
-	
-	#Interactive Mode Complete, exit.
-	
-	echo "secure1host complete. Terminating script."
-	exit
-	
-}
-
-############################################Begin Configuration Mode
-
-Config_File_Update() {
-
-	echo "check if .config file there. If there, overwrite with this line ' Method=User. ' If not there, make new one"
-	echo "then configure mode enters an interactive mode for adding a line to the config file"
-
-
-}
-
-############################################Begin Auto Mode
-
-Auto_Mode() {
-
-	echo "check if config file there"
-	echo "if not there, run function for default variables"
-	echo "if there, load config file for user variables"
-	
-	echo "Running Auto_Mode with $Method settings."
-	Full_System_Update
-	Tools_Update
-	Display_Crontab
-	Erase_Crontab
-	Auto_System_Updates
-	Display_Firewall_Status
-	Firewall_Reset_Default
-	Basic_Net_Scan
-	Firewall_Whitelist_Single_Out_Port
-	Lynis_Hardening_Audit
-	Lynis_Pentest_Audit
-	echo ' '
-	echo "Be sure to review documentation for hardening opportunities"
-	echo ' '
-	echo "secure1host complete. Terminating script."
-	exit
-
-}
-
-############################################Begin Main function
+############################################################## Main
 
 Main() {
-	
+
+
 	#changes settings based on options
 	
 	echo "Welcome to secure1host!"
-	echo "Only interactive mode (-i) and help (-h) has been designed. Auto Mode and supporting functions are in progress, as are methods of output and several core functions."
-	echo "----------------------------------------------------------------------------"
-	echo " "
+
 	
 	for i in $ARGS; do
 		case "$i" in
-			-c | --configure)
-				configure="true"
-				shift;;
-			-i | --interactive)
-				interactive="true"
-				shift;;
 			-h | --help)
 				Help
 				exit;;
+			-y | --yes)
+				All_Yes='y'
+				shift;;
 			--)
+				echo " "
+				Root_Check
 				break;;
 
 		esac
@@ -645,736 +433,16 @@ Main() {
 	
 	#executes based on settings
 	
-	if [ "$interactive" == true ]; then
-		Root_Check
-		echo "executing in interactive mode"
-		echo " "
-		Interractive_Mode
+	if [ $All_Yes == 'y' ]; then
+		All_Yes
+	else
+		Set_Variables
 	fi
-	
-	if [ "$configure" == true ]; then
-		Root_Check
-		echo "setting to user mode and updating config file"
-		echo " "
-		Config_File_Update
-		echo "to return to default mode from user mode, run 'sudo secure1host --default'"
-		echo " "
-	fi
-	
-	if [ "$interactive" != true ] && [ "$configure" != true ];then
-		Root_Check
-		echo "running secure1host's Auto Mode"
-		echo " "
-		Auto_Mode
-		
-	fi
-	
-	
-	
-	
-	
-
-}
-
-Main
-
-#The structure is simple. We update our software, then set up automatic updates, then set up the firewall, then we start doing system audit and configuration, then we enable sustainable logging for a small system, then we build automated detection, alerting, and response instrumentation around the security posture we've built ourselves prior to this final step.
-
-#Things are changing as I work on this, and when I can get to it it's very fun.
-
-
-
-########################################################################################
-
-################################################ Import initial arguments and declare all variables 'false' or 'n'
-
-
-ARGS=$(getopt --options 'cdih' --long "configure,default,interactive,help" -- "$@")
-
-set -- "$ARGS"
-
-configure="false"
-default="false"
-interactive="false"
-Flip_white_port='false'
-S_Update='n'
-T_Update='n'
-C_Erase='n'
-C_Update='n'
-F_Default='n'
-Net_Scan='n'
-F_White_Port='n'
-port=' '
-Hard_Audit='n'
-Pen_Audit='n'
-###################stop include here
-A_Whitelist='n'
-Log_Enable='n'
-Hash='n'
-Vuln_Scan='n'
-Mon_Scan='n'
-U_White='n'
-U_Mon='n'
-Host_Mon='n'
-Scan_Detect='n'
-Honey_Creds='n'
-P_Cap='n'
-Snort='n'
-Honey_Ports='n'
-Honey_Hash='n'
-Scan_Frag='n'
-Priv_Frag='n'
-Scan_Resp='n'
-Trap_Monitor='n'
-Trap_Ban='n'
-Trap_Report='n'
-Auto_Response='n'
-
-###############################################B egin Utility Functions
-
-
-
-Full_System_Update() {
-
-	if [ $S_Update == 'y' ]; then 
-		echo "Beginning full system upgrade"
-		echo " "
-		sudo apt -y update
-		sudo apt -y full-upgrade
-		sudo apt -y autoremove
-		sudo apt -y autoclean
-		echo "System fully upgraded"
-		echo " "
-
-	fi
-		
-}
-
-Tools_Update() {
-
-	if [ $T_Update == 'y' ]; then
-		
-		echo "Beginning tools update"
-		echo " "
-		sudo apt -y update
-		sudo apt -y install nmap netsecure ufw lynis
-		sudo apt -y full-upgrade nmap netsecure ufw lynis
-		sudo apt -y autoremove
-		sudo apt -y autoclean
-		echo "tools fully installed and updated"
-		echo " "
-		
-	fi
-
-		
-}
-
-
-
-Display_Crontab() {
-
-
-	echo "---Displaying user crontab---"
-	echo " "
-	crontab -l
-	echo " "
-	echo "---Displaying root crontab---"
-	echo " "
-	sudo crontab -l
-	echo " "
-
-
-}
-
-Erase_Crontab() {
-
-	if [ $C_Erase == 'y' ]; then
-		echo " " | crontab -
-		echo " " | sudo crontab -
-		echo "user and root crontabs erased"
-		echo " "
-		Display_Crontab
-	fi
-
-
-}
-
-Auto_System_Updates() {
-	
-	if [ $C_Update == 'y' ]; then
-		echo "0 1 * * * apt -y update 
-1 1 * * * apt -y upgrade 
-2 1 * * * apt -y autoremove 
-3 1 * * * apt -y autoclean " | sudo crontab -
-		Display_Crontab
-	fi
-
-
-}
-
-Display_Firewall_Status() {
-
-	echo "---Displaying UFW Firewall status---"
-	echo " "
-	sudo ufw status verbose
-	echo " "
-
-}
-
-
-Firewall_Reset_Default() {
-
-	if [ $F_Default == 'y' ]; then
-		sudo ufw enable
-		sudo ufw reset ###need to figure out how to do this without it asking me permission
-		sudo ufw enable
-		Display_Firewall_Status
-	fi
-
-
-}
-
-
-
-Basic_Net_Scan() {
-	
-	if [ $Net_Scan == 'y' ]; then
-		echo "---Initiating basic network scan---"
-		echo " "
-		First_Three=$(ifconfig | grep netmask | awk '/broadcast/ {print $2}' | cut -d "." -f 1,2,3 | uniq)
-		Net=$(ip addr show | grep inet | grep brd | tr '/' ' ' | awk '{print $3}')
-		ID=$(ifconfig | grep netmask | awk '/broadcast/ {print $4}' | tr '.' ' ' | awk '{print $4}')
-		sudo nmap -T4 $First_Three.$ID/$Net
-		echo " "
-	fi
-
-	
-}
-
-Firewall_Whitelist_Single_Out_Port() {
-
-	if [ $F_White_Port == 'y' ]; then
-		sudo ufw allow out $port
-		if [ $Flip_white_port == 'false' ]; then
-			sudo ufw default deny outgoing
-			Flip_white_port='true'
-		fi
-		Display_Firewall_Status
-	fi
-	
-
-
-}
-
-
-Lynis_Hardening_Audit() {
-
-	if [ $Hard_Audit == 'y' ]; then
-		echo 'system will now do an internal audit'
-		sudo lynis audit system
-
-	fi
-
-}
-
-Lynis_Pentest_Audit() {
-
-	if [ $Pen_Audit == 'y' ]; then
-		echo 'system will now do an internal pentest'
-		sudo lynis --pentest audit system
-	fi
-
-
-}
-
-##################################STOP INCLUDING Here
-
-Application_Whitelisting() {
-
-	if [ $A_Whitelist == 'y' ]; then
-		echo 'application whitelisting not made yet'
-	fi
-
-
-}
-
-Enable_Logging() {
-
-	if [ $Log_Enable == 'y' ]; then
-		echo 'not made yet'
-		#do one thing
-	fi
-
-
-}
-
-Hashing_Files_and_Executables() {
-
-	if [ $Hash == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Scanning_Self_For_Vulnerabilities() {
-	
-	if [ $Vuln_Scan == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Monitoring_Neighbors() {
-
-	if [ $Mon_Scan == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-User_Whitelisting() {
-
-	if [ $U_White == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-User_Monitoring() {
-
-	if [ $U_Mon == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Password_Checker() {
-
-	if [ $P_Checker == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Monitor_Host_File() {
-
-	if [ $Host_Mon == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Set_up_Netcat_scan_detector() {
-
-	if [ $Scan_Detect == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Plant_honey_credentials() {
-
-	
-	if [ $Honey_Creds == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-} 
-
-Enable_network_traffic_monitoring() {
-
-	if [ $P_Cap == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-set_up_snort() {
-
-	if [ $Snort == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Enable_Honey_Ports() {
-
-	if [ $Honey_Ports == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Enable_Honey_Hashes() {
-
-	if [ $Honey_Hash == 'y' ]; then
-		echo 'not made yet'
-	fi
-	
-
-	
-}
-
-Frustrate_Scanning_Efforts() {
-
-	if [ $Scan_Frag == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Frustrate_Privesc_Efforts() {
-
-	if [ $Priv_Frag == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Respond_To_Scanning() {
-
-	if [ $Scan_Resp == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Trip_to_monitor() {
-
-	if [ $Trap_Monitor == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Trip_to_Ban() {
-
-	if [ $Trap_Ban == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-} 
-
-Trip_to_report() {
-
-	if [ $Trap_Report == 'y' ]; then
-		echo 'not made yet'
-	fi
-
-	
-}
-
-Automated_Response() {
-
-	if [ $Auto_Response == 'y' ]; then
-		echo 'not made yet'
-		#do one thing
-	fi
-
-
-}
-
-###########################################Begin Configuration Handling Functions
-
-Root_Check() {
-
-	user=$(whoami)
-	if [ $user != root ]; then
-		echo 'Permission denied. Please run sudo secure1host -h'
-		exit
-	fi
-
-}
-
-Help() {
-	
-	echo 'Displaying help:'
-	echo ' '
-	echo 'secure1host runs in Auto Mode and Interactive Mode.'
-	echo ' '
-	echo 'to run in Interactive Mode, run "sudo secure1host --(i)nteractive"'
-	echo 'to run in Auto Mode, run "sudo secure1host"'
-	
-	echo ' '
-	echo 'Auto Mode runs with default settings unless configured (-c)'
-	echo 'this will modify your configurations as you go, but you can use a keyboard interrupt to cancel at any time'
-	echo ' '
-	echo 'to reset secure1host to defualt mode, run "sudo secure1host --(d)efault"'
-	echo 'this will not delete the configurations you have made.'
-	echo ' '
-	echo 'to display this help, run "sudo secure1host --(h)elp"'
-
-}
-
-create_config_file() {
-
-	touch secure1host.config
-	Method='default' >> secure1host.config
-
-}
-
-default_reset() {
-
-	echo "setting Method variable to default" #echo figure out how to change method variable to default
-	exit
-
-}
-
-###########################################Begin Default Config Variables
-
-default_configs() {
-
-	echo "loading default variables" #structure and determine auto mode to determine what these variables are to be
-	Method='default'
-	S_Update='y'
-	T_Update='y'
-	C_Erase='y'
-	C_Update='y'
-	F_Default='y'
-	Net_Scan='n'
-	F_White_Port='n'
-	port='993 6969 53 http https 465 587'
-	Hard_Audit='y'
-	Pen_Audit='y'
-	###################stop include here
-	A_Whitelist='n'
-	Log_Enable='n'
-	Hash='n'
-	Vuln_Scan='n'
-	Mon_Scan='n'
-	U_White='n'
-	U_Mon='n'
-	Host_Mon='n'
-	Scan_Detect='n'
-	Honey_Creds='n'
-	P_Cap='n'
-	Snort='n'
-	Honey_Ports='n'
-	Honey_Hash='n'
-	Scan_Frag='n'
-	Priv_Frag='n'
-	Scan_Resp='n'
-	Trap_Monitor='n'
-	Trap_Ban='n'
-	Trap_Report='n'
-	Auto_Response='n'
-	
-}
-
-###########################################Begin Interactive mode
-
-Interractive_Mode() { #this one will negotiate with the user
-
-	#Begin System Updates Procedure
-	
-	echo "would you like to run a full upgrade of the system?(y/n)"
-	read S_Update
-	echo " "
-	Full_System_Update
-	echo "would you like to install/update all tools used in this script?(y/n)"
-	read T_Update
-	Tools_Update
-	Display_Crontab
-	echo "Would you like to erase all crontab items?(y/n)"
-	read C_Erase
-	echo " "
-	Erase_Crontab
-	echo "Would you like to create a cron job to run an upgrade of the system at 1AM every morning to protect it from vulnerabilities?(y/n)"
-	read C_Update
-	echo " "
-	Auto_System_Updates
-	
-	#Begin Firewall Defaults Procedure
-	
-	Display_Firewall_Status
-	echo "would you like to enable a default UFW firewall?(only permits outgoing connections)"
-	echo "This will flush all user configurations on UFW.(y/n)"
-	read F_Default
-	echo " "
-	Firewall_Reset_Default
-
-	#Begin Basic Net Scan Procedure
-	
-	echo "Would you like to do a simple scan of the subnet? This information can be used to create an outgoing connection whitelist in our next step. Be advised, if you have your Firewall's default outbound permissions set to deny, this will create 10 error messages at the start.(y/n)"
-	read Net_Scan
-	echo " "
-	Basic_Net_Scan
-	
-	#Begin Firewall Outgoing Whitelist Procedure
-	
-	echo "would you like to make a whitelist for outgoing connections? This will block all connections through unauthorized ports, allowing for further logging.(y/n)"
-	read F_White_Port
-	echo " "
-	while [ $F_White_Port == 'y' ]; do
-		echo 'name a port to whitelist (recommend one of these; 993, 6969, 53, http, https, 465, 587)'
-		read port
-		Firewall_Whitelist_Single_Out_Port
-		echo " "
-		echo "outbound $port connections permitted. go again?(y/n)"
-		read F_White_Port
-		echo " "
-	done
-	
-	#Begin Lynis Hardening Audit
-	
-	echo "would you like to audit your system for hardening?(y/n)"
-	read Hard_Audit
-	while [ $Hard_Audit == 'y' ]; do
-		Lynis_Hardening_Audit
-		echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that audit to see the results of your changes?(y/n)'
-		read Hard_Audit
-	done
-	
-	#Begin Lynis Pentest Audit
-	
-	echo "would you like to pentest your system?(y/n)"
-	read Pen_Audit 
-	while [ $Pen_Audit == 'y' ]; do
-		Lynis_Pentest_Audit
-		echo 'Take the time to correct these vulnerabilities, then answer this; Would you like to rerun that pentest to see the results of your changes?(y/n)'
-		read Pen_Audit
-	done
-	
-	#Interactive Mode Complete, exit.
+	Run_Commands
+	Progress_Report
 	
 	echo "secure1host complete. Terminating script."
 	exit
-	
-}
-
-############################################Begin Configuration Mode
-
-Config_File_Update() {
-
-	echo "first thing, sets method to user"
-	echo "then is an interactive mode for editing the config file"
-	#set up and define varaiables for Auto Mode to determine what the configuration procedure for the config file is to be.
-
-}
-
-############################################Begin Auto Mode
-
-Auto_Mode() {
-
-	echo "test if config file is there, if not there, load default configuration into a new config file, including the method variable"
-	echo "load config file variables, where the variable after Method is behind an if statement checking for Method" #learn how to load config file, as a part of declaring variables
-	Method='default' #remove this after config file set up
-	
-	if [ $Method == "default" ]; then
-		default_configs
-	fi
-	if [ $Method == "user" ]; then
-		echo "loading user variables"
-	fi
-	echo "running in $Method driven Auto_Mode"
-	Full_System_Update
-	Tools_Update
-	Display_Crontab
-	Erase_Crontab
-	Auto_System_Updates
-	Display_Firewall_Status
-	Firewall_Reset_Default
-	Basic_Net_Scan
-	Firewall_Whitelist_Single_Out_Port
-	Lynis_Hardening_Audit
-	Lynis_Pentest_Audit
-	echo ' '
-	echo "Be sure to review documentation for hardening opportunities"
-	echo ' '
-	echo "secure1host complete. Terminating script."
-	exit
-
-}
-
-############################################Begin Main function
-
-Main() {
-
-	#checks if running as root, kicks you out if not
-	
-	Root_Check
-	
-	#changes settings based on options
-	
-	echo "Welcome to secure1host!"
-	echo "Only interactive mode (-i) and help (-h) has been designed. Auto Mode and supporting functions are in progress, as are methods of output and several core functions."
-	echo "-----------------------------"
-	echo " "
-	
-	for i in $ARGS; do
-		case "$i" in
-			-c | --configure)
-				configure="true"
-				echo "this will configure user settings"
-				shift;;
-			-d | --default)
-				default="true"
-				echo "this will return Auto Mode to default."
-				shift;;
-			-i | --interactive)
-				interactive="true"
-				echo "this will launch interactive mode"
-				shift;;
-			-h | --help)
-				Help
-				exit;;
-			--)
-				break;;
-
-		esac
-	done
-	
-	#executes based on settings
-	
-	if [ "$interactive" == true ]; then
-		echo "executing in interactive mode"
-		echo " "
-		Interractive_Mode
-	fi
-	
-	if [ "$configure" == true ]; then
-		echo "setting to user mode and updating config file"
-		echo " "
-		Config_File_Update
-		echo "to return to default mode from user mode, run 'sudo secure1host --default'"
-		echo " "
-	fi
-	
-	if [ "$default" == true ]; then
-		echo "returning secure1host to default mode"
-		echo " "
-		default_reset
-	fi
-	
-	if [ "$interactive" != true ] && [ "$configure" != true ] && [ "$default" != true ];then
-		echo "running secure1host's Auto Mode"
-		echo " "
-		Auto_Mode
-		
-	fi
-	
-	
-	
-	
-	
-
 }
 
 Main
