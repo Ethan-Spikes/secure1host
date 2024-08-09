@@ -319,7 +319,7 @@ Help() { #good
 	echo ' '
 	echo 'to run the program, execute "sudo secure1host"'
 	echo 'to run the program with all settings enabled, execute "sudo secure1host -y"'
-	echo 'to display this help again, run "secure1host -h (or --help)"'
+	echo 'to display this help again, run "secure1host -h"'
 
 }
 
