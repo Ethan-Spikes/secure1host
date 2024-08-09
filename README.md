@@ -1,4 +1,4 @@
-# "secure1host" walkthrough
+# "secure1host"
 
 The goal is to make a single script that secures your device quickly and easily
 
