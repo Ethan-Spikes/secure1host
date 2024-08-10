@@ -26,6 +26,7 @@ path=/home/$(who | awk '/tty/ {print $1}')/Desktop/secure1host.config
 
 All_Yes='n'
 U_Settings='n'
+C_Settings='n'
 
 S_Update='n'
 T_Update='n'
@@ -436,12 +437,9 @@ Main() {
 				All_Yes='y'
 				shift;;
 			-c | --configure)
-				Configure_Settings
-				echo 'configuration complete'
-				echo 'run "sudo secure1host -u" to run with configurations'
-				exit;;
+				C_Settings='y'
+				shift;;
 			-u | --user-settings)
-				source $path
 				U_Settings='y'
 				shift;;
 			--)
@@ -457,7 +455,13 @@ Main() {
 	if [ $All_Yes == 'y' ]; then
 		All_Yes
 	elif [ $U_Settings == 'y' ]; then
+		source $path
 		break
+	elif [ $C_Settings == 'y' ]; then
+		Configure_Settings
+		echo 'configuration complete'
+		echo 'run "sudo secure1host -u" to run with configurations'
+		exit
 	else
 		Set_Variables
 	fi
