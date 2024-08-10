@@ -1,18 +1,8 @@
 #!/bin/bash
 
-#this is secure1host simplified. 
+#secure1host version: 4.2
 
-#it takes the same intent as the original secure1host but it simplifies it.
-
-#the original secure1host was trying to do too much and it made it monolithic and awkward
-
-#The origional secure1host tried too hard to be interactive, when all we want is something that makes a great one-liner and that is easy to use.
-
-#what I want it to do is ask all of the questions at once and then - with one yes or no - do it all very quickly. Spacing out the questions is very annoying.
-
-#then after that I want it to assess the security of the system after the configurations and give further suggestions using lynis.
-
-#forget interactive and auto mode, just let it do its thing.
+#meant to be configurable, and to make securing your debian host easy.
 
 
 ################################################################# args and variables
