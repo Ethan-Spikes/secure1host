@@ -2,50 +2,49 @@
 
 #this is secure1host simplified. 
 
-#the original secure1host was monolithic and awkward.
+#it takes the same intent as the original secure1host but it simplifies it.
 
-#still working on configuration and output.
+#the original secure1host was trying to do too much and it made it monolithic and awkward
+
+#The origional secure1host tried too hard to be interactive, when all we want is something that makes a great one-liner and that is easy to use.
+
+#what I want it to do is ask all of the questions at once and then - with one yes or no - do it all very quickly. Spacing out the questions is very annoying.
+
+#then after that I want it to assess the security of the system after the configurations and give further suggestions using lynis.
+
+#forget interactive and auto mode, just let it do its thing.
 
 
 ################################################################# args and variables
 
-ARGS=$(getopt --options 'hy' --long "help, yes" -- "$@")
+ARGS=$(getopt --options 'hycu' --long "help, yes, configure, user-settings" -- "$@")
 
 set -- "$ARGS"
 
+#config file path
+path=/home/$(who | awk '/tty/ {print $1}')/Desktop/secure1host.config
+
 All_Yes='n'
+U_Settings='n'
 
 S_Update='n'
 T_Update='n'
-C_Erase='n'
 C_Update='n'
 F_Default='n'
 Net_Scan='n'
 F_White_Port='n'
 port=' '
 Hard_Audit='n'
-Pen_Audit='n'
-###################stop include here
-A_Whitelist='n'
 Log_Enable='n'
 Hash='n'
 Vuln_Scan='n'
 Mon_Scan='n'
 U_White='n'
 U_Mon='n'
-Host_Mon='n'
 Scan_Detect='n'
-Honey_Creds='n'
-P_Cap='n'
-Snort='n'
 Honey_Ports='n'
-Honey_Hash='n'
 Scan_Frag='n'
-Priv_Frag='n'
 Scan_Resp='n'
-Trap_Monitor='n'
-Trap_Ban='n'
-Trap_Report='n'
 Auto_Response='n'
 
 
@@ -318,8 +317,10 @@ Help() { #good
 	echo 'Displaying help:'
 	echo ' '
 	echo 'to run the program, execute "sudo secure1host"'
-	echo 'to run the program with all settings enabled, execute "sudo secure1host -y"'
-	echo 'to display this help again, run "secure1host -h"'
+	echo 'to run the program with all settings enabled, execute "sudo secure1host -y" (or --yes)'
+	echo 'to set up a configuration file, run "sudo secure1host -c" (or configure)'
+	echo 'to run with a configuration file, run "sudo secure1host -u" (or user-settings)'
+	echo 'to display this help again, run "secure1host -h (or --help)"'
 
 }
 
@@ -366,37 +367,54 @@ All_Yes() {
 
 	S_Update='y'
 	T_Update='y'
-	C_Erase='y'
 	C_Update='y'
 	F_Default='y'
 	Net_Scan='y'
 	F_White_Port='y'
 	port=' '
 	Hard_Audit='y'
-	Pen_Audit='y'
-	###################stop include here
-	A_Whitelist='y'
 	Log_Enable='y'
 	Hash='y'
 	Vuln_Scan='y'
 	Mon_Scan='y'
 	U_White='y'
 	U_Mon='y'
-	Host_Mon='y'
 	Scan_Detect='y'
-	Honey_Creds='y'
-	P_Cap='y'
-	Snort='y'
 	Honey_Ports='y'
-	Honey_Hash='y'
 	Scan_Frag='y'
-	Priv_Frag='y'
 	Scan_Resp='y'
-	Trap_Monitor='y'
-	Trap_Ban='y'
-	Trap_Report='y'
 	Auto_Response='y'
 	
+}
+
+############################################################## Configure settings
+Configure_Settings() {
+
+	Set_Variables
+	
+	
+	
+	echo "S_Update=$S_Update" > $path
+	echo "T_Update=$T_Update" >> $path
+	echo "C_Update=$C_Update" >> $path
+	echo "F_Default=$F_Default" >> $path
+	echo "Net_Scan=$Net_Scan" >> $path
+	echo "F_White_Port=$F_White_Port" >> $path
+	echo "port=" >> $path
+	echo "Hard_Audit=$Hard_Audit" >> $path
+	echo "Log_Enable=$Log_Enable" >> $path
+	echo "Hash=$Hash" >> $path
+	echo "Vuln_Scan=$Vuln_Scan" >> $path
+	echo "Mon_Scan=$Mon_Scan" >> $path
+	echo "U_White=$U_White" >> $path
+	echo "U_Mon=$U_Mon" >> $path
+	echo "Scan_Detect=$Scan_Detect" >> $path
+	echo "Honey_Ports=$Honey_Ports" >> $path
+	echo "Scan_Frag=$Scan_Frag" >> $path
+	echo "Scan_Resp=$Scan_Resp" >> $path
+	echo "Auto_Response=$Auto_Response" >> $path
+
+
 }
 
 ############################################################## Main
@@ -417,6 +435,15 @@ Main() {
 			-y | --yes)
 				All_Yes='y'
 				shift;;
+			-c | --configure)
+				Configure_Settings
+				echo 'configuration complete'
+				echo 'run "sudo secure1host -u" to run with configurations'
+				exit;;
+			-u | --user-settings)
+				source $path
+				U_Settings='y'
+				shift;;
 			--)
 				echo " "
 				Root_Check
@@ -429,9 +456,12 @@ Main() {
 	
 	if [ $All_Yes == 'y' ]; then
 		All_Yes
+	elif [ $U_Settings == 'y' ]; then
+		break
 	else
 		Set_Variables
 	fi
+	
 	Run_Commands
 	Progress_Report
 	
